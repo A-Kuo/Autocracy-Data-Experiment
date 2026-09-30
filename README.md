@@ -9,6 +9,8 @@ Everything here is a prototype with hand-picked weights. Treat outputs as illust
 |---|---|
 | `src/build_index.py` | Parts 1-2: pulls V-Dem, HDI and GDP data, builds the index, writes the workbook and plots |
 | `src/nlp_speeches.py` | Part 3: scrapes UK Prime Minister speeches, scores them with spaCy + VADER, compares against monthly GDP |
+| `src/residual_model.py` | Option A: economics-only gradient-boosted baseline -> residuals -> onset prediction; Option B gate |
+| `src/rhetoric_lexicon.py` | Tier-1 regex lexicons (anti-elite, scapegoating, delegitimization) with a hook for a transformer tier |
 | `output/democratic_resilience_index.xlsx` | The spreadsheet: editable **Weights** sheet, **Regression**, **Summary**, one sheet per case (live formulas + charts) |
 | `output/index_*.png` | Index plots per case; `uk_rhetoric_vs_gdp.png` for the NLP prototype |
 | `data/raw`, `data/processed` | Downloaded source data (cached) and flat CSV outputs |
@@ -88,3 +90,15 @@ the series is noisy and this is one episode.
 1. Add more cases, including non-slides (e.g. Spain, Portugal, South Korea), so the index can be tested for false positives.
 2. Replace hand weights with a fitted model (e.g. logit on "V-Dem drops 0.1+ in 5 years") and validate out of sample.
 3. Upgrade the NLP: HuggingFace stance/toxicity model, then try a leader in a backsliding country.
+
+## 4. Residual model (Option A) and gating (Option B)
+
+`python src/residual_model.py` (also needs `scikit-learn`). Country-grouped out-of-fold CV throughout, so a country's own history never leaks into its "expected" democracy.
+
+- **Baseline:** HistGradientBoosting on HDI, GDP per capita and their 1/3-year changes explains R² 0.43 of liberal democracy.
+- **Onset target:** liberal democracy falls 0.10+ within 5 years (6.3% of country-years).
+- **Result (grouped-CV AUC, identical rows):** economics only 0.569, + residual 0.593. Modest gain; all near chance.
+  The Option B rule gate barely separates onset rates (6.6% vs 6.3%).
+- **Not yet in the data:** ACLED/UCDP unrest, inflation, unemployment, GINI and cross-country rhetoric scores. The
+  script joins `data/processed/political_features.csv` (`entity, year, rhetoric_score, unrest_events`) if you add it.
+  ACLED needs an API key.
