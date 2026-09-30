@@ -1,0 +1,8 @@
+pandas
+numpy
+matplotlib
+openpyxl
+requests
+beautifulsoup4
+spacy
+vaderSentiment
